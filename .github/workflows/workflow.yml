@@ -48,7 +48,7 @@ jobs:
       # Deploy using Helm
       - name: Deploy Coffee API using Helm
         run: |
-          helm upgrade --install coffee-api ./helm/coffee-api-chart \
+          helm upgrade --install coffee-api ./coffee-api-chart \
             --set image.repository=ghcr.io/cofeeapikryvobok/coffee-api \
             --set image.tag=latest \
             --wait --timeout 60s

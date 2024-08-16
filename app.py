@@ -1,43 +1,36 @@
-import psycopg2
 from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
 import uuid
 import datetime
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:password@postgres-service:5432/coffee_db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
-# Подключение к БД
-conn = psycopg2.connect(
-    dbname="coffee_db",
-    user="user",
-    password="password",
-    host="db"
-)
-cursor = conn.cursor()
+class Transaction(db.Model):
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    amount = db.Column(db.Numeric(10, 2))
+    coffee_type = db.Column(db.String(50))
 
-@app.route('/coffee', methods=['POST'])
-def coffee():
-    try:
-        payment = float(request.json['payment'])
-        coffee_type = "Espresso" if payment < 2.00 else "Latte" if payment < 3.00 else "Cappuccino"
+@app.route('/order', methods=['POST'])
+def order():
+    data = request.json
+    payment = data.get('payment')
 
-        transaction_id = str(uuid.uuid4())
-        timestamp = datetime.datetime.utcnow()
+    if payment < 2.00:
+        coffee_type = 'Espresso'
+    elif 2.00 <= payment < 3.00:
+        coffee_type = 'Latte'
+    else:
+        coffee_type = 'Cappuccino'
 
-        # Вставка транзакции в БД
-        cursor.execute(
-            "INSERT INTO transactions (id, timestamp, payment, coffee_type) VALUES (%s, %s, %s, %s)",
-            (transaction_id, timestamp, payment, coffee_type)
-        )
-        conn.commit()
+    transaction = Transaction(amount=payment, coffee_type=coffee_type)
+    db.session.add(transaction)
+    db.session.commit()
 
-        return jsonify({
-            "transaction_id": transaction_id,
-            "timestamp": timestamp,
-            "payment": payment,
-            "coffee_type": coffee_type
-        }), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+    return jsonify({'coffee_type': coffee_type})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

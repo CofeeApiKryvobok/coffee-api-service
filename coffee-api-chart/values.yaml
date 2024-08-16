@@ -1,9 +1,17 @@
 replicaCount: 1
+
 image:
-  repository: your_docker_image_repository
-  tag: "latest"
-  pullPolicy: IfNotPresent
+  repository: ghcr.io/cofeeapikryvobok/coffee-api
+  tag: latest
+
 service:
   type: ClusterIP
-  port: 5000
-resources: {}
+  port: 80
+
+postgres:
+  image:
+    repository: postgres
+    tag: 13
+  username: user
+  password: password
+  database: coffee_db

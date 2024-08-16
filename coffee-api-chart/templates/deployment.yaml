@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: coffee-api
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: 1
   selector:
     matchLabels:
       app: coffee-api
@@ -14,6 +14,9 @@ spec:
     spec:
       containers:
         - name: coffee-api
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: ghcr.io/cofeeapikryvobok/coffee-api:latest
           ports:
             - containerPort: 5000
+          env:
+            - name: FLASK_ENV
+              value: "development"
