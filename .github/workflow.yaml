@@ -1,0 +1,54 @@
+name: CI/CD Pipeline for Coffee API Service
+
+on:
+  push:
+    branches:
+      - env/staging
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      DOCKER_IMAGE: ghcr.io/your-username/coffee-api:latest
+      KUBECONFIG: /home/runner/.kube/config
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Docker
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to GitHub Packages
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      # Build and Push Docker Image
+      - name: Build and push Docker image
+        run: |
+          docker build -t $DOCKER_IMAGE .
+          docker push $DOCKER_IMAGE
+
+      # Set up kubectl and Helm
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: v1.23.0
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+
+      # Setup Minikube (if running Minikube locally)
+      - name: Set up Minikube
+        run: minikube start --driver=docker
+
+      # Deploy using Helm
+      - name: Deploy Coffee API using Helm
+        run: |
+          helm upgrade --install coffee-api ./helm/coffee-api-chart \
+            --set image.repository=ghcr.io/your-username/coffee-api \
+            --set image.tag=latest \
+            --wait --timeout 60s
