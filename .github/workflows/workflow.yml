@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DOCKER_IMAGE: ghcr.io/your-username/coffee-api:latest
+      DOCKER_IMAGE: ghcr.io/CofeeApiKryvobok/coffee-api:latest
       KUBECONFIG: /home/runner/.kube/config
 
     steps:
