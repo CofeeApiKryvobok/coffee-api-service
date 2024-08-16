@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DOCKER_IMAGE: ghcr.io/CofeeApiKryvobok/coffee-api:latest
+      DOCKER_IMAGE: ghcr.io/cofeeapikryvobok/coffee-api:latest
       KUBECONFIG: /home/runner/.kube/config
 
     steps:
@@ -49,6 +49,6 @@ jobs:
       - name: Deploy Coffee API using Helm
         run: |
           helm upgrade --install coffee-api ./helm/coffee-api-chart \
-            --set image.repository=ghcr.io/your-username/coffee-api \
+            --set image.repository=ghcr.io/cofeeapikryvobok/coffee-api \
             --set image.tag=latest \
             --wait --timeout 60s
