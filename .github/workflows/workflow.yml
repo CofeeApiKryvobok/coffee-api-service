@@ -39,15 +39,6 @@ jobs:
       - name: Set up Minikube
         run: minikube start --driver=docker
 
-      # Create Kubernetes secret
-      - name: Create Docker registry secret
-        run: |
-          kubectl create secret docker-registry regcred \
-            --docker-server=ghcr.io \
-            --docker-username=${{ github.actor }} \
-            --docker-password=${{ secrets.MY_GITHUB_TOKEN }} \
-            --docker-email=${{ github.actor }}@users.noreply.github.com
-
       # Set up kubectl and Helm
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
@@ -56,6 +47,15 @@ jobs:
 
       - name: Install Helm
         uses: azure/setup-helm@v3
+
+      # Create Kubernetes secret
+      - name: Create Docker registry secret
+        run: |
+          kubectl create secret docker-registry regcred \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.MY_GITHUB_TOKEN }} \
+            --docker-email=${{ github.actor }}@users.noreply.github.com
 
       # Deploy using Helm
       - name: Deploy Coffee API using Helm
