@@ -35,6 +35,19 @@ jobs:
       - name: Push Docker image
         run: docker push $DOCKER_IMAGE
 
+      # Setup Minikube
+      - name: Set up Minikube
+        run: minikube start --driver=docker
+
+      # Create Kubernetes secret
+      - name: Create Docker registry secret
+        run: |
+          kubectl create secret docker-registry regcred \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.MY_GITHUB_TOKEN }} \
+            --docker-email=${{ github.actor }}@users.noreply.github.com
+
       # Set up kubectl and Helm
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
@@ -44,16 +57,13 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v3
 
-      # Setup Minikube (if running Minikube locally)
-      - name: Set up Minikube
-        run: minikube start --driver=docker
-
       # Deploy using Helm
       - name: Deploy Coffee API using Helm
         run: |
           helm upgrade --install coffee-api ./coffee-api-chart \
             --set image.repository=ghcr.io/cofeeapikryvobok/coffee-api \
             --set image.tag=latest \
+            --set imagePullSecrets[0].name=regcred \
             --wait --timeout 60s || exit 1
 
       # Get pod logs if deployment fails
