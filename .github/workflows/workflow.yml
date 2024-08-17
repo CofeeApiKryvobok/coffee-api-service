@@ -9,48 +9,49 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
     env:
       DOCKER_IMAGE: ghcr.io/cofeeapikryvobok/coffee-api:latest
       KUBECONFIG: /home/runner/.kube/config
 
     steps:
       # Checkout the repository
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      # Set up Minikube
-      - name: Set up Minikube
-        uses: medyagh/setup-minikube@latest
+      # Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-      # Build Docker image and push to GitHub Container Registry
-      - name: Login to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      # Login to GitHub Container Registry
+      - name: Login to GitHub Packages
+        run: echo "${{ secrets.MY_GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build Docker image for Coffee API
-        run: |
-          minikube image build -t $DOCKER_IMAGE .
+      # Build and Tag Docker Image
+      - name: Build Docker image
+        run: docker build -t $DOCKER_IMAGE .
 
-      - name: Push Docker image to GitHub Container Registry
-        run: |
-          docker push $DOCKER_IMAGE
+      # Push Docker Image to GitHub Packages
+      - name: Push Docker image
+        run: docker push $DOCKER_IMAGE
 
-      # Install Helm and deploy the application to Minikube
+      # Set up kubectl and Helm
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: v1.23.0
+
       - name: Install Helm
         uses: azure/setup-helm@v3
 
+      # Setup Minikube (if running Minikube locally)
+      - name: Set up Minikube
+        run: minikube start --driver=docker
+
+      # Deploy using Helm
       - name: Deploy Coffee API using Helm
         run: |
           helm upgrade --install coffee-api ./coffee-api-chart \
-            --set image.repository=ghcr.io/${{ github.repository }}/coffee-api \
+            --set image.repository=ghcr.io/cofeeapikryvobok/coffee-api \
             --set image.tag=latest \
-            --wait --timeout 120s
-
-      # Verify Deployment
-      - name: Check Pods Status
-        run: kubectl get pods -A
-
-      - name: Test Coffee API Service
-        run: |
-          SERVICE_URL=$(minikube service coffee-api-service --url)
-          echo "Service URL: $SERVICE_URL"
-          curl $SERVICE_URL/version
+            --wait --timeout 60s
