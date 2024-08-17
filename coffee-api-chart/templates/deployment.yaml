@@ -20,3 +20,5 @@ spec:
           env:
             - name: FLASK_ENV
               value: "development"
+      imagePullSecrets:
+        - name: regcred
