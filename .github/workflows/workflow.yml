@@ -53,7 +53,7 @@ jobs:
         run: |
           kubectl create secret docker-registry regcred \
             --docker-server=ghcr.io \
-            --docker-username=${{ github.actor }} \
+            --docker-username="cofeeapikryvobok" \
             --docker-password=${{ secrets.MY_GITHUB_TOKEN }} \
             --docker-email=${{ github.actor }}@users.noreply.github.com
 
