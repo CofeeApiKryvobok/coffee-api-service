@@ -15,27 +15,21 @@ jobs:
       KUBECONFIG: /home/runner/.kube/config
 
     steps:
-      # Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Login to GitHub Container Registry
       - name: Login to GitHub Packages
         run: echo "${{ secrets.MY_GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      # Build and Tag Docker Image
       - name: Build Docker image
         run: docker build -t $DOCKER_IMAGE .
 
-      # Push Docker Image to GitHub Packages
       - name: Push Docker image
         run: docker push $DOCKER_IMAGE
 
-      # Set up kubectl and Helm
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
         with:
@@ -44,14 +38,25 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v3
 
-      # Setup Minikube (if running Minikube locally)
       - name: Set up Minikube
         run: minikube start --driver=docker
 
-      # Deploy using Helm
       - name: Deploy Coffee API using Helm
         run: |
           helm upgrade --install coffee-api ./coffee-api-chart \
             --set image.repository=ghcr.io/cofeeapikryvobok/coffee-api \
             --set image.tag=latest \
-            --wait --timeout 60s
+            --debug \
+            --wait --timeout 120s
+
+      - name: Check Kubernetes resources
+        run: |
+          kubectl get pods -A
+          kubectl get services -A
+          kubectl get deployments -A
+
+      - name: Get Helm release history
+        run: helm history coffee-api
+
+      - name: Get Helm release status
+        run: helm status coffee-api
