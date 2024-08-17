@@ -41,9 +41,17 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v3
 
-      # Setup Minikube (if running Minikube locally)
+      # Setup Minikube
       - name: Set up Minikube
-        run: minikube start --driver=docker
+        run: |
+          minikube start --driver=docker --memory=6000 --cpus=4
+          minikube status
+
+      # Verify that Kubernetes is ready
+      - name: Check Kubernetes nodes and pods
+        run: |
+          kubectl get nodes
+          kubectl get pods -A
 
       # Deploy using Helm
       - name: Deploy Coffee API using Helm
@@ -51,4 +59,4 @@ jobs:
           helm upgrade --install coffee-api ./coffee-api-chart \
             --set image.repository=ghcr.io/cofeeapikryvobok/coffee-api \
             --set image.tag=latest \
-            --wait --timeout 60s
+            --wait --timeout 10m
