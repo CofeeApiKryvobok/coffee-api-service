@@ -99,9 +99,10 @@ jobs:
         run: |
           echo "Testing /order endpoint..."
           curl --fail -X POST $SERVICE_URL/order -H "Content-Type: application/json" -d '{"payment": 2.50}' || exit 1
+          
 
-      # Always get logs from pods
       - name: Get pod logs
+        if: failure()
         run: |
           echo "Gathering logs..."
           kubectl get pods --selector=app=coffee-api
