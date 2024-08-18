@@ -10,4 +10,4 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 5000
-      nodePort: 30007  # Убедитесь, что выбранный порт не конфликтует с другими сервисами
+      nodePort: 30007

@@ -15,3 +15,8 @@ postgres:
   username: user
   password: password
   database: coffee_db
+
+migration:
+  image:
+    repository: ghcr.io/cofeeapikryvobok/coffee-api
+    tag: latest

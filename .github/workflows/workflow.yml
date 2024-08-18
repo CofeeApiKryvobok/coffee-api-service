@@ -64,7 +64,7 @@ jobs:
             --set image.repository=ghcr.io/cofeeapikryvobok/coffee-api \
             --set image.tag=latest \
             --set imagePullSecrets[0].name=regcred \
-            --wait --timeout 300s
+            --wait --timeout=300s
 
       # Wait for pods to stabilize
       - name: Wait for Coffee API to be ready
@@ -72,9 +72,12 @@ jobs:
           echo "Waiting for pods to be ready..."
           kubectl wait --for=condition=available --timeout=300s deployment/coffee-api
 
-      # Sleep to give services time to stabilize
-      - name: Sleep for stabilization
-        run: sleep 120
+      # Run database migration job
+      - name: Run database migration job
+        run: |
+          echo "Starting database migration..."
+          kubectl apply -f ./coffee-api-chart/templates/db-migration-job.yaml
+          kubectl wait --for=condition=complete --timeout=300s job/db-migration-job
 
       # Set up port forwarding for Minikube
       - name: Set up Minikube port forwarding
@@ -99,8 +102,8 @@ jobs:
         run: |
           echo "Testing /order endpoint..."
           curl --fail -X POST $SERVICE_URL/order -H "Content-Type: application/json" -d '{"payment": 2.50}' || exit 1
-          
 
+      # Get pod logs if any step failed
       - name: Get pod logs
         if: failure()
         run: |

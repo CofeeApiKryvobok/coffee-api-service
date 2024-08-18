@@ -17,10 +17,26 @@ spec:
           image: postgres:13
           env:
             - name: POSTGRES_USER
-              value: "user"
+              value: "{{ .Values.postgres.username }}"
             - name: POSTGRES_PASSWORD
-              value: "password"
+              value: "{{ .Values.postgres.password }}"
             - name: POSTGRES_DB
-              value: "coffee_db"
+              value: "{{ .Values.postgres.database }}"
           ports:
             - containerPort: 5432
+          livenessProbe:
+            exec:
+              command:
+                - "pg_isready"
+                - "-U"
+                - "{{ .Values.postgres.username }}"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - "pg_isready"
+                - "-U"
+                - "{{ .Values.postgres.username }}"
+            initialDelaySeconds: 30
+            periodSeconds: 10
