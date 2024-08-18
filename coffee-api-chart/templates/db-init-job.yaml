@@ -6,30 +6,17 @@ spec:
   template:
     spec:
       containers:
-        - name: init-db
+        - name: db-init
           image: postgres:13
-          command:
-            - "sh"
-            - "-c"
-            - |
-              until pg_isready -U {{ .Values.postgres.username }} -d {{ .Values.postgres.database }}; do
-                echo "Waiting for database to be ready...";
-                sleep 2;
-              done;
-              psql -U {{ .Values.postgres.username }} -d {{ .Values.postgres.database }} -c "$(cat /etc/config/init.sql)"
           env:
-            - name: POSTGRES_USER
-              value: "{{ .Values.postgres.username }}"
-            - name: POSTGRES_PASSWORD
-              value: "{{ .Values.postgres.password }}"
-            - name: POSTGRES_DB
-              value: "{{ .Values.postgres.database }}"
-          volumeMounts:
-            - name: init-scripts
-              mountPath: /etc/config
-              readOnly: true
+            - name: PGPASSWORD
+              value: "password"
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              until pg_isready -h postgres -U user; do
+                echo "Waiting for PostgreSQL..."
+                sleep 5
+              done
+              psql -h postgres -U user -d coffee_db -c "CREATE TABLE IF NOT EXISTS \"transaction\" (id UUID PRIMARY KEY, timestamp TIMESTAMP NOT NULL, amount NUMERIC(10, 2) NOT NULL, coffee_type VARCHAR(255) NOT NULL);"
       restartPolicy: OnFailure
-      volumes:
-        - name: init-scripts
-          configMap:
-            name: postgres-init-scripts
