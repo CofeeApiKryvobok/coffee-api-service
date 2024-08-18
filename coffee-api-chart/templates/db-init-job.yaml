@@ -17,7 +17,7 @@ spec:
                 echo "Waiting for database to be ready...";
                 sleep 2;
               done;
-              psql -U {{ .Values.postgres.username }} -d {{ .Values.postgres.database }} -f /scripts/init.sql
+              psql -U {{ .Values.postgres.username }} -d {{ .Values.postgres.database }} -c "$(cat /etc/config/init.sql)"
           env:
             - name: POSTGRES_USER
               value: "{{ .Values.postgres.username }}"
@@ -27,8 +27,8 @@ spec:
               value: "{{ .Values.postgres.database }}"
           volumeMounts:
             - name: init-scripts
-              mountPath: /scripts
-              subPath: init.sql
+              mountPath: /etc/config
+              readOnly: true
       restartPolicy: OnFailure
       volumes:
         - name: init-scripts

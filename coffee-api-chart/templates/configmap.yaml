@@ -5,7 +5,6 @@ metadata:
   namespace: {{ .Release.Namespace }}
 data:
   init.sql: |-
-    -- Создание таблицы transaction
     CREATE TABLE IF NOT EXISTS "transaction" (
         id UUID PRIMARY KEY,
         timestamp TIMESTAMP NOT NULL,
