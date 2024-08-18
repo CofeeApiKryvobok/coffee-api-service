@@ -17,33 +17,15 @@ spec:
           image: postgres:13
           env:
             - name: POSTGRES_USER
-              value: "{{ .Values.postgres.username }}"
+              value: "user"
             - name: POSTGRES_PASSWORD
-              value: "{{ .Values.postgres.password }}"
+              value: "password"
             - name: POSTGRES_DB
-              value: "{{ .Values.postgres.database }}"
-          ports:
-            - containerPort: 5432
-          livenessProbe:
-            exec:
-              command:
-                - "pg_isready"
-                - "-U"
-                - "{{ .Values.postgres.username }}"
-                - "-d"
-                - "{{ .Values.postgres.database }}"
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            exec:
-              command:
-                - "pg_isready"
-                - "-U"
-                - "{{ .Values.postgres.username }}"
-                - "-d"
-                - "{{ .Values.postgres.database }}"
-            initialDelaySeconds: 30
-            periodSeconds: 10
+              value: "coffee_db"
+          volumeMounts:
+            - name: init-scripts
+              mountPath: /etc/config
+              readOnly: true
       volumes:
         - name: init-scripts
           configMap:
