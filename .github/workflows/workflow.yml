@@ -57,8 +57,8 @@ jobs:
             --docker-password=${{ secrets.MY_GITHUB_TOKEN }} \
             --docker-email=${{ github.actor }}@users.noreply.github.com
 
-      # Deploy Coffee API using Helm
-      - name: Deploy Coffee API using Helm
+      # Deploy using Helm
+      - name: Deploy using Helm
         run: |
           helm upgrade --install coffee-api ./coffee-api-chart \
             --set image.repository=ghcr.io/cofeeapikryvobok/coffee-api \
@@ -66,12 +66,19 @@ jobs:
             --set imagePullSecrets[0].name=regcred \
             --wait --timeout=300s
 
-      # Wait for pods to stabilize
+      # Wait for Coffee API pods to be ready
       - name: Wait for Coffee API to be ready
         run: |
-          echo "Waiting for pods to be ready..."
+          echo "Waiting for Coffee API pods to be ready..."
           kubectl wait --for=condition=available --timeout=300s deployment/coffee-api
 
+      # Fetch logs from db-init Job
+      - name: Fetch logs from db-init Job
+        run: |
+          echo "Fetching logs for db-init Job..."
+          JOB_NAME=$(kubectl get jobs -o jsonpath='{.items[?(@.metadata.name=="db-init")].metadata.name}')
+          POD_NAME=$(kubectl get pods --selector=job-name=$JOB_NAME -o jsonpath='{.items[0].metadata.name}')
+          kubectl logs $POD_NAME || echo "No logs available for job $JOB_NAME"
 
       # Set up port forwarding for Minikube
       - name: Set up Minikube port forwarding
