@@ -1,22 +1,22 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: db-init
+  name: postgres-init-job
 spec:
   template:
     spec:
       containers:
-        - name: db-init
-          image: postgres:13
+        - name: postgres-init
+          image: postgres:latest
+          command: ["sh", "-c", "psql -h postgres-service -U user -d coffee_db -f /init/init.sql"]
           env:
             - name: PGPASSWORD
               value: "password"
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              until pg_isready -h postgres -U user; do
-                echo "Waiting for PostgreSQL..."
-                sleep 5
-              done
-              psql -h postgres -U user -d coffee_db -c "CREATE TABLE IF NOT EXISTS \"transaction\" (id UUID PRIMARY KEY, timestamp TIMESTAMP NOT NULL, amount NUMERIC(10, 2) NOT NULL, coffee_type VARCHAR(255) NOT NULL);"
+          volumeMounts:
+            - name: init-scripts
+              mountPath: /init
       restartPolicy: OnFailure
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: postgres-init-scripts

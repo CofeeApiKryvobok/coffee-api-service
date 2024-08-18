@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres
+  name: postgres-deployment
 spec:
   replicas: 1
   selector:
@@ -12,26 +12,9 @@ spec:
       labels:
         app: postgres
     spec:
-      initContainers:
-        - name: init-db
-          image: postgres:13
-          env:
-            - name: PGPASSWORD
-              value: "password"
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              until pg_isready -h localhost -U user; do
-                echo "Waiting for PostgreSQL..."
-                sleep 5
-              done
-              psql -h localhost -U user -d coffee_db -f /docker-entrypoint-initdb.d/init.sql
-          volumeMounts:
-            - name: init-scripts
-              mountPath: /docker-entrypoint-initdb.d
       containers:
         - name: postgres
-          image: postgres:13
+          image: postgres:latest
           env:
             - name: POSTGRES_USER
               value: "user"
@@ -42,10 +25,8 @@ spec:
           ports:
             - containerPort: 5432
           volumeMounts:
-            - name: init-scripts
-              mountPath: /docker-entrypoint-initdb.d
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
       volumes:
-        - name: init-scripts
-          configMap:
-            name: postgres-init-scripts
-      restartPolicy: Always
+        - name: postgres-data
+          emptyDir: {}

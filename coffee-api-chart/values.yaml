@@ -11,7 +11,7 @@ service:
 postgres:
   image:
     repository: postgres
-    tag: 13
+    tag: 13.16
   username: user
   password: password
   database: coffee_db
