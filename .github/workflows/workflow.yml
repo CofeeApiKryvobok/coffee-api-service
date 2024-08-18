@@ -48,7 +48,7 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v3
 
-      # Create Kubernetes secret
+      # Create Kubernetes secret for pulling Docker images
       - name: Create Docker registry secret
         run: |
           kubectl create secret docker-registry regcred \
@@ -57,44 +57,53 @@ jobs:
             --docker-password=${{ secrets.MY_GITHUB_TOKEN }} \
             --docker-email=${{ github.actor }}@users.noreply.github.com
 
-      # Deploy using Helm
+      # Deploy Coffee API using Helm
       - name: Deploy Coffee API using Helm
         run: |
           helm upgrade --install coffee-api ./coffee-api-chart \
             --set image.repository=ghcr.io/cofeeapikryvobok/coffee-api \
             --set image.tag=latest \
             --set imagePullSecrets[0].name=regcred \
-            --wait --timeout 60s || exit 1
+            --wait --timeout 300s
 
-      # Sleep to give the application time to initialize
-      - name: Sleep for 2 minutes to allow the application to start
+      # Wait for pods to stabilize
+      - name: Wait for Coffee API to be ready
+        run: |
+          echo "Waiting for pods to be ready..."
+          kubectl wait --for=condition=available --timeout=300s deployment/coffee-api
+
+      # Sleep to give services time to stabilize
+      - name: Sleep for stabilization
         run: sleep 120
 
-      # Port-forward to access the service
-      - name: Port forward to the Coffee API service
+      # Set up port forwarding for Minikube
+      - name: Set up Minikube port forwarding
         run: |
-          kubectl port-forward svc/coffee-api-service 8080:80 &
-          sleep 5
+          minikube service coffee-api-service --url > service-url.txt
+          export SERVICE_URL=$(cat service-url.txt)
+          echo "SERVICE_URL=$SERVICE_URL" >> $GITHUB_ENV
 
-      # Test the health of the Coffee API
-      - name: Test Coffee API Health Endpoint
+      # Perform health check on Coffee API with retries
+      - name: Health check Coffee API
         run: |
-          until curl --silent --fail http://localhost:8080/api/health; do
-            echo "Waiting for the Coffee API to be ready..."
+          for i in {1..10}; do
+            echo "Attempt $i: Checking health endpoint..."
+            curl --fail $SERVICE_URL/health && exit 0
             sleep 10
           done
-          echo "Coffee API is up and running."
+          echo "Health check failed after 10 attempts."
+          exit 1
 
-      # Test the POST /order endpoint
-      - name: Test Coffee API Order Endpoint
+      # Perform functional test on Coffee API /order endpoint
+      - name: Functional test Coffee API
         run: |
-          curl -X POST http://localhost:8080/order -H "Content-Type: application/json" -d '{"payment": 2.5}' 
+          echo "Testing /order endpoint..."
+          curl --fail -X POST $SERVICE_URL/order -H "Content-Type: application/json" -d '{"payment": 2.50}' || exit 1
 
-      # Get pod logs if deployment fails
-      - name: Get pod logs on failure
-        if: failure()
+      # Always get logs from pods
+      - name: Get pod logs
         run: |
-          echo "Deployment failed. Gathering logs..."
+          echo "Gathering logs..."
           kubectl get pods --selector=app=coffee-api
           kubectl describe pods
           POD_NAME=$(kubectl get pods --selector=app=coffee-api -o jsonpath='{.items[0].metadata.name}')
