@@ -66,6 +66,24 @@ jobs:
             --set imagePullSecrets[0].name=regcred \
             --wait --timeout 60s || exit 1
 
+      # Sleep to give the application time to initialize
+      - name: Sleep for 2 minutes to allow the application to start
+        run: sleep 120
+
+      # Test the health of the Coffee API
+      - name: Test Coffee API Health Endpoint
+        run: |
+          until curl --silent --fail http://coffee-api-service/api/health; do
+            echo "Waiting for the Coffee API to be ready..."
+            sleep 10
+          done
+          echo "Coffee API is up and running."
+
+      # Test the POST /order endpoint
+      - name: Test Coffee API Order Endpoint
+        run: |
+          curl -X POST http://coffee-api-service/order -H "Content-Type: application/json" -d '{"payment": 2.5}' 
+
       # Get pod logs if deployment fails
       - name: Get pod logs on failure
         if: failure()

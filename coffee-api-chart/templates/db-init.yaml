@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-init-job
+spec:
+  template:
+    spec:
+      containers:
+        - name: db-init
+          image: postgres:13
+          env:
+            - name: POSTGRES_USER
+              value: "{{ .Values.postgres.username }}"
+            - name: POSTGRES_PASSWORD
+              value: "{{ .Values.postgres.password }}"
+            - name: POSTGRES_DB
+              value: "{{ .Values.postgres.database }}"
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              psql -h postgres-service -U {{ .Values.postgres.username }} -d {{ .Values.postgres.database }} -c "
+              CREATE TABLE IF NOT EXISTS transactions (
+                id UUID PRIMARY KEY,
+                timestamp TIMESTAMP NOT NULL,
+                amount DECIMAL(10, 2) NOT NULL,
+                coffee_type VARCHAR(50) NOT NULL
+              );"
+      restartPolicy: OnFailure
+  backoffLimit: 4

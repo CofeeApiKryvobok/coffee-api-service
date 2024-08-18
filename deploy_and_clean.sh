@@ -18,24 +18,29 @@ usage() {
 }
 
 # Обработка аргументов
-while [[ "$1" =~ ^- && ! "$1" == "--" ]]; do case $1 in
-  -b | --build )
-    BUILD=true
-    ;;
-  -s | --start )
-    START=true
-    ;;
-  -d | --deploy )
-    DEPLOY=true
-    ;;
-  -c | --clean )
-    CLEAN=true
-    ;;
-  -h | --help )
-    usage
-    ;;
-esac; shift; done
-if [[ "$1" == '--' ]]; then shift; fi
+while [ "$1" != "" ]; do
+  case $1 in
+    -b | --build )
+      BUILD=true
+      ;;
+    -s | --start )
+      START=true
+      ;;
+    -d | --deploy )
+      DEPLOY=true
+      ;;
+    -c | --clean )
+      CLEAN=true
+      ;;
+    -h | --help )
+      usage
+      ;;
+    * )
+      usage
+      ;;
+  esac
+  shift
+done
 
 # Запуск локального Docker реестра, если он не запущен
 start_local_registry() {
