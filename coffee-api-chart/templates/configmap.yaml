@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-scripts
+  namespace: {{ .Release.Namespace }}
+data:
+  init.sql: |-
+    -- Создание таблицы transaction
+    CREATE TABLE IF NOT EXISTS "transaction" (
+        id UUID PRIMARY KEY,
+        timestamp TIMESTAMP NOT NULL,
+        amount NUMERIC(10, 2) NOT NULL,
+        coffee_type VARCHAR(255) NOT NULL
+    );
