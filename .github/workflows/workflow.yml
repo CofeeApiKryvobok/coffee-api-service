@@ -80,6 +80,16 @@ jobs:
           POD_NAME=$(kubectl get pods --selector=job-name=$JOB_NAME -o jsonpath='{.items[0].metadata.name}')
           kubectl logs $POD_NAME || echo "No logs available for job $JOB_NAME"
 
+      # Fetch logs from PostgreSQL pods
+      - name: Fetch logs from PostgreSQL pods
+        run: |
+          echo "Fetching logs for PostgreSQL pods..."
+          POD_NAMES=$(kubectl get pods --selector=app=postgresql -o jsonpath='{.items[*].metadata.name}')
+          for POD_NAME in $POD_NAMES; do
+            echo "Logs for pod: $POD_NAME"
+            kubectl logs $POD_NAME || echo "No logs available for pod $POD_NAME"
+          done
+
       # Set up port forwarding for Minikube
       - name: Set up Minikube port forwarding
         run: |
@@ -114,3 +124,14 @@ jobs:
           POD_NAME=$(kubectl get pods --selector=app=coffee-api -o jsonpath='{.items[0].metadata.name}')
           echo "Fetching logs for pod: $POD_NAME"
           kubectl logs $POD_NAME || echo "No logs available for pod $POD_NAME"
+
+      # Fetch logs from PostgreSQL pods if any step failed
+      - name: Fetch logs from PostgreSQL pods on failure
+        if: failure()
+        run: |
+          echo "Fetching logs for PostgreSQL pods due to failure..."
+          POD_NAMES=$(kubectl get pods --selector=app=postgresql -o jsonpath='{.items[*].metadata.name}')
+          for POD_NAME in $POD_NAMES; do
+            echo "Logs for pod: $POD_NAME"
+            kubectl logs $POD_NAME || echo "No logs available for pod $POD_NAME"
+          done
