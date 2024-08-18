@@ -72,12 +72,6 @@ jobs:
           echo "Waiting for pods to be ready..."
           kubectl wait --for=condition=available --timeout=300s deployment/coffee-api
 
-      # Run database migration job
-      - name: Run database migration job
-        run: |
-          echo "Starting database migration..."
-          kubectl apply -f ./coffee-api-chart/templates/db-migration-job.yaml
-          kubectl wait --for=condition=complete --timeout=300s job/db-migration-job
 
       # Set up port forwarding for Minikube
       - name: Set up Minikube port forwarding
