@@ -99,12 +99,34 @@ jobs:
           echo "Health check failed after 10 attempts."
           exit 1
 
-
       # Perform functional test on Coffee API /order endpoint
       - name: Functional test Coffee API
         run: |
-          echo "Testing /order endpoint..."
-          curl --fail -X POST $SERVICE_URL/order -H "Content-Type: application/json" -d '{"payment": 2.50}' || exit 1
+          echo "Testing /order endpoint with different payment amounts..."
+          # Perform multiple orders with different payment amounts
+          for amount in 1.50 2.50 3.50 4.50; do
+            response=$(curl --write-out "%{http_code}" --silent --output /dev/null -X POST $SERVICE_URL/order -H "Content-Type: application/json" -d "{\"payment\": $amount}")
+            if [ "$response" -ne 200 ]; then
+              echo "Failed to call /order endpoint with payment $amount, HTTP status code: $response"
+              exit 1
+            fi
+          done
+
+          echo "Testing /order_stats endpoint..."
+          response=$(curl --write-out "%{http_code}" --silent --output /dev/null -X GET $SERVICE_URL/order_stats)
+          if [ "$response" -ne 200 ]; then
+            echo "Failed to call /order_stats endpoint, HTTP status code: $response"
+            exit 1
+          fi
+
+          echo "Testing /health endpoint..."
+          response=$(curl --write-out "%{http_code}" --silent --output /dev/null -X GET $SERVICE_URL/health)
+          if [ "$response" -ne 200 ]; then
+            echo "Failed to call /health endpoint, HTTP status code: $response"
+            exit 1
+          fi
+
+          echo "All tests passed successfully!"
 
       # Get pod logs if any step failed
       - name: Get pod logs
