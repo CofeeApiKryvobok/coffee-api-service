@@ -32,12 +32,6 @@ def order():
 
     return jsonify({'coffee_type': coffee_type})
 
-@app.route('/order_stats', methods=['GET'])
-def order_stats():
-    stats = db.session.query(Transaction.coffee_type, db.func.count(Transaction.id)).group_by(Transaction.coffee_type).all()
-    result = {coffee_type: count for coffee_type, count in stats}
-    return jsonify(result)
-
 # Health check endpoint
 @app.route('/health', methods=['GET'])
 def health():
