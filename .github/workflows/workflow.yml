@@ -92,6 +92,13 @@ jobs:
           echo "Health check failed after 10 attempts."
           exit 1
 
+      # Set up port forwarding for Minikube
+      - name: Set up Minikube port forwarding
+        run: |
+          minikube service coffee-api-service --url > service-url.txt
+          export SERVICE_URL=$(cat service-url.txt)
+          echo "SERVICE_URL=$SERVICE_URL" >> $GITHUB_ENV
+
       # Perform functional test on Coffee API /order endpoint
       - name: Functional test Coffee API
         run: |
