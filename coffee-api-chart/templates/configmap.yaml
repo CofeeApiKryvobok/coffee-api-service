@@ -7,6 +7,6 @@ data:
     CREATE TABLE IF NOT EXISTS "transaction" (
         id UUID PRIMARY KEY,
         timestamp TIMESTAMP NOT NULL,
-        amount NUMERIC(10, 2) NOT NULL,
+        amount NUMERIC NOT NULL,
         coffee_type VARCHAR(255) NOT NULL
     );
