@@ -3,9 +3,11 @@ kind: Service
 metadata:
   name: coffee-api-service
 spec:
+  type: NodePort
   selector:
     app: coffee-api
   ports:
     - protocol: TCP
       port: 80
       targetPort: 5000
+      nodePort: 30007  # Убедитесь, что выбранный порт не конфликтует с другими сервисами
