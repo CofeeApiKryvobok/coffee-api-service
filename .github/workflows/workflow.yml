@@ -103,8 +103,19 @@ jobs:
         if: failure()
         run: |
           echo "Gathering logs..."
+
+          # Coffee API Pod Logs
+          echo "Fetching logs for Coffee API pods..."
           kubectl get pods --selector=app=coffee-api
-          kubectl describe pods
+          kubectl describe pods --selector=app=coffee-api
           POD_NAME=$(kubectl get pods --selector=app=coffee-api -o jsonpath='{.items[0].metadata.name}')
           echo "Fetching logs for pod: $POD_NAME"
           kubectl logs $POD_NAME || echo "No logs available for pod $POD_NAME"
+
+          # PostgreSQL Pod Logs
+          echo "Fetching logs for PostgreSQL pods..."
+          kubectl get pods --selector=app=postgres
+          kubectl describe pods --selector=app=postgres
+          POSTGRES_POD_NAME=$(kubectl get pods --selector=app=postgres -o jsonpath='{.items[0].metadata.name}')
+          echo "Fetching logs for pod: $POSTGRES_POD_NAME"
+          kubectl logs $POSTGRES_POD_NAME || echo "No logs available for pod $POSTGRES_POD_NAME"
